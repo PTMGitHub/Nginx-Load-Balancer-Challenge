@@ -1,0 +1,56 @@
+version: '3.1'
+services:
+    nginx:
+        # name of the image we using to build this container (nginx) and a version number (:latest)
+        image: nginx:latest
+        container_name: nginx_reverseproxy
+        #expresses dependencies
+        depends_on:
+            - flask
+        #    - app2
+        #Copies the nginx.conf file from current folder on host to to the default.conf file on the nginx container
+        volumes:
+            - ./nginx.conf:/etc/nginx/conf.d/default.conf
+        #list logical network groups its associated with
+        networks:
+            - docker-network
+        #maps local host port 80 ti container post 80
+        ports:
+            - 80:80
+
+    flask:
+        #build the commands
+        build:
+            # path to the dockerfile. this specifise current directory
+            context: ./
+            #Alternative Dockerfile. the documentation says compose uses and alternative dockerfile
+            #to build wth. and shows and example of "dockerfile: Dockerfile-alternative"  - dont 100%
+            #understand
+            dockerfile: Dockerfile
+        # name of the image we are using to create yhe container/ (flask) version number (:v1)
+        image: flask:v1
+        container_name: flask_webapp
+        
+        volumes:
+            #Copies everything in form currently local dir (./) in a folder on 
+            #the container ("/flask_code'")
+            - ./:/flask_code/
+        environment:
+            #sets the FLASK_APP varisble to the main app file (main.py)
+            #(we dont technically need this)
+            - FLASK_APP=/flask_code/main.py
+        #command to run the app
+        command: python /flask_code/main.py
+
+        networks:
+            #This docker container is part of the 'docker-network' network
+            docker-network:
+                #give it a name "flask_webapp"
+                aliases:
+                    - flask_webapp
+        #Maps the host port 8080 to container port 5000
+        ports:
+            - 8080:5000
+    
+networks:
+    docker-network:
